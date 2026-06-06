@@ -8,8 +8,8 @@
       "args": [],
       "stopAtEntry": false,
       "externalConsole": true,
-      "cwd": "d:/Scuola/Uni/PAO/just-task-manager/tests",
-      "program": "d:/Scuola/Uni/PAO/just-task-manager/tests/build/Debug/outDebug",
+      "cwd": "d:/Scuola/Uni/PAO/just-activity-manager/tests",
+      "program": "d:/Scuola/Uni/PAO/just-activity-manager/tests/build/Debug/outDebug",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [
