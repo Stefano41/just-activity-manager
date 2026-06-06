@@ -1,0 +1,83 @@
+name: Unit Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  test:
+    name: Test unitari + verifica Docker
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del repository
+        uses: actions/checkout@v4
+
+      # ── 1. Verifica che il Dockerfile esista ────────────────────────────────
+      - name: Verifica presenza Dockerfile
+        run: |
+          if [ ! -f Dockerfile ]; then
+            echo "Dockerfile non trovato nella root del repository."
+            exit 1
+          fi
+          echo "Dockerfile trovato."
+
+      # ── 2. Build dell'immagine Docker ───────────────────────────────────────
+      - name: Build immagine Docker
+        id: docker_build
+        run: |
+          docker build -t qt-course-env . 2>&1 | tee docker_build.log
+          echo "Image built successfully."
+
+      # ── 3. Verifica che il container si avvii e sia funzionante ─────────────
+      - name: Verifica avvio container
+        run: |
+          docker run --rm qt-course-env bash -c "
+            echo '=== Verifica ambiente ===' &&
+            qmake --version &&
+            make --version &&
+            cppcheck --version &&
+            echo '=== Container operativo ==='"
+
+      # ── 4. Verifica che Qt sia disponibile nel container ────────────────────
+      - name: Verifica Qt nel container
+        run: |
+          docker run --rm qt-course-env bash -c "
+            qmake --version 2>&1 | grep -i 'Qt version' || {
+              echo 'Qt non trovato nel container.'
+              exit 1
+            }"
+
+      # ── 5. Compila ed esegui i test dentro il container ────────────────────
+      - name: Compila ed esegui i test
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}:/app \
+            -w /app/tests \
+            -e QT_QPA_PLATFORM=offscreen \
+            qt-course-env \
+            bash -c "
+              qmake tests.pro &&
+              make -j$(nproc) &&
+              ./tests -v2 -o ../test_results.xml,xunitxml 2>&1 | tee ../test_output.log"
+
+      # ── 6. Pubblica risultati in formato JUnit su GitHub ────────────────────
+      - name: Pubblica risultati test
+        if: always()
+        uses: mikepenz/action-junit-report@v4
+        with:
+          report_paths: test_results.xml
+          check_name: Risultati Qt Test
+
+      # ── 7. Salva tutti gli artefatti ────────────────────────────────────────
+      - name: Salva artefatti
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            docker_build.log
+            test_results.xml
+            test_output.log
