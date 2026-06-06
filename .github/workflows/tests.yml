@@ -15,55 +15,65 @@ jobs:
       - name: Checkout del repository
         uses: actions/checkout@v4
 
-      # ── 1. Verifica che il Dockerfile esista ────────────────────────────────
-      - name: Verifica presenza Dockerfile
-        run: |
-          if [ ! -f Dockerfile ]; then
-            echo "Dockerfile non trovato nella root del repository."
-            exit 1
-          fi
-          echo "Dockerfile trovato."
-
-      # ── 2. Build dell'immagine Docker ───────────────────────────────────────
+      # ── 1. Build immagine (include lcov e cppcheck) ─────────────────────────
       - name: Build immagine Docker
-        id: docker_build
-        run: |
-          docker build -t qt-course-env . 2>&1 | tee docker_build.log
-          echo "Image built successfully."
+        run: docker build -t qt-course-env .
 
-      # ── 3. Verifica che il container si avvii e sia funzionante ─────────────
-      - name: Verifica avvio container
+      # ── 2. Verifica che il container si avvii e Qt sia disponibile ──────────
+      - name: Verifica ambiente nel container
         run: |
-          docker run --rm qt-course-env bash -c "
-            echo '=== Verifica ambiente ===' &&
-            qmake --version &&
-            make --version &&
-            cppcheck --version &&
-            echo '=== Container operativo ==='"
+          docker run --rm \
+            qt-course-env \
+            bash -c "
+              echo '=== Verifica ambiente ===' &&
+              qmake --version &&
+              make --version &&
+              g++ --version &&
+              lcov --version &&
+              cppcheck --version &&
+              echo '=== Container operativo ==='"
 
-      # ── 4. Verifica che Qt sia disponibile nel container ────────────────────
-      - name: Verifica Qt nel container
-        run: |
-          docker run --rm qt-course-env bash -c "
-            qmake --version 2>&1 | grep -i 'Qt version' || {
-              echo 'Qt non trovato nel container.'
-              exit 1
-            }"
-
-      # ── 5. Compila ed esegui i test dentro il container ────────────────────
+      # ── 3. Compila ed esegui i test ─────────────────────────────────────────
+      # QT_QPA_PLATFORM=offscreen: evita errori di display in ambiente headless
+      # --coverage: strumenta il codice per gcov
       - name: Compila ed esegui i test
         run: |
           docker run --rm \
             -v ${{ github.workspace }}:/app \
             -w /app/tests \
+            -u $(id -u):$(id -g) \
             -e QT_QPA_PLATFORM=offscreen \
             qt-course-env \
             bash -c "
-              qmake tests.pro &&
+              qmake 'QMAKE_CXXFLAGS+=--coverage' 'QMAKE_LFLAGS+=--coverage' tests.pro &&
               make -j$(nproc) &&
               ./tests -v2 -o ../test_results.xml,xunitxml 2>&1 | tee ../test_output.log"
 
-      # ── 6. Pubblica risultati in formato JUnit su GitHub ────────────────────
+      # ── 4. Genera report di copertura con lcov ──────────────────────────────
+      - name: Genera report copertura
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}:/app \
+            -w /app/tests \
+            -u $(id -u):$(id -g) \
+            qt-course-env \
+            bash -c "
+              lcov --capture \
+                   --directory . \
+                   --output-file coverage.info &&
+              lcov --remove coverage.info \
+                   '/usr/*' '*/tests/*' '*/Qt/*' \
+                   --output-file coverage.info"
+
+      # ── 5. Invia copertura a Coveralls ─────────────────────────────────────
+      - name: Invia a Coveralls
+        uses: coverallsapp/github-action@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          coveralls-token: ${{ secrets.COVERALLS_REPO_TOKEN }}
+          path-to-lcov: tests/coverage.info
+
+      # ── 6. Pubblica risultati test su GitHub ────────────────────────────────
       - name: Pubblica risultati test
         if: always()
         uses: mikepenz/action-junit-report@v4
@@ -71,13 +81,13 @@ jobs:
           report_paths: test_results.xml
           check_name: Risultati Qt Test
 
-      # ── 7. Salva tutti gli artefatti ────────────────────────────────────────
+      # ── 7. Salva artefatti ──────────────────────────────────────────────────
       - name: Salva artefatti
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: test-results
           path: |
-            docker_build.log
             test_results.xml
             test_output.log
+            tests/coverage.info

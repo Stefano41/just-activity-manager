@@ -1,6 +1,10 @@
 QT       += testlib core
 QT       -= gui
 
+# Aggiunge i flag gcov per la copertura
+QMAKE_CXXFLAGS += --coverage
+QMAKE_LFLAGS   += --coverage
+
 TARGET    = tests
 TEMPLATE  = app
 CONFIG   += console

@@ -1,4 +1,4 @@
-name: Analisi Statica
+name: Static Analysis
 
 on:
   push:
@@ -15,31 +15,34 @@ jobs:
       - name: Checkout del repository
         uses: actions/checkout@v4
 
-      - name: Build immagine Docker
-        run: docker build -t qt-course-env .
+      - name: Pull immagine Docker del corso
+        run: docker pull unipd-oop/qt-env:2025
 
-      # Esegue cppcheck dentro il container sul codice del modello logico
-      # --enable=all          : abilita tutti i controlli
-      # --suppress=missingInclude : ignora Qt headers non trovati
-      # --error-exitcode=1    : fallisce la CI se trova errori reali
+      # Installa cppcheck (non presente nell'immagine del corso)
       - name: Esegui cppcheck
         run: |
           docker run --rm \
             -v ${{ github.workspace }}:/app \
             -w /app \
-            qt-course-env \
-            bash -c "cppcheck \
-              --enable=all \
-              --suppress=missingInclude \
-              --suppress=unmatchedSuppression \
-              --inline-suppr \
-              --error-exitcode=1 \
-              --output-file=cppcheck_report.txt \
-              --template='{file}:{line}: {severity}: {message}' \
-              src/ 2>&1 | tee cppcheck_output.log"
+            --user root \
+            unipd-oop/qt-env:2025 \
+            bash -c "
+              apt-get update -q && apt-get install -y -q cppcheck &&
+              cppcheck \
+                --enable=all \
+                --suppress=missingInclude \
+                --suppress=unmatchedSuppression \
+                --inline-suppr \
+                --error-exitcode=1 \
+                --output-file=cppcheck_report.txt \
+                --template='{file}:{line}: {severity}: {message}' \
+                src/ 2>&1 | tee cppcheck_output.log"
 
-      # Salva il report come artefatto
-      - name: Salva report cppcheck
+      - name: Mostra riassunto
+        if: always()
+        run: cat cppcheck_report.txt || echo "Nessun problema trovato."
+
+      - name: Salva report
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -47,10 +50,3 @@ jobs:
           path: |
             cppcheck_report.txt
             cppcheck_output.log
-
-      # Mostra un riassunto nel log della CI
-      - name: Mostra riassunto
-        if: always()
-        run: |
-          echo "=== RISULTATI CPPCHECK ==="
-          cat cppcheck_report.txt || echo "Nessun problema trovato."

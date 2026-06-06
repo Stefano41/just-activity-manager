@@ -1,6 +1,4 @@
-name: Build Check
-
-# Eseguito ad ogni push e pull request su main e develop
+name: Build
 on:
   push:
     branches: [main, develop]
@@ -16,21 +14,18 @@ jobs:
       - name: Checkout del repository
         uses: actions/checkout@v4
 
-      # Costruisce l'immagine Docker dal Dockerfile del corso
       - name: Build immagine Docker
         run: docker build -t qt-course-env .
 
-      # Compila il progetto dentro il container
-      # Si assume che il .pro sia nella root del repository
       - name: Compila il progetto
         run: |
           docker run --rm \
             -v ${{ github.workspace }}:/app \
             -w /app \
+            -u $(id -u):$(id -g) \
             qt-course-env \
             bash -c "qmake ActivityManager.pro && make -j$(nproc) 2>&1 | tee build.log"
 
-      # Carica il log di compilazione come artefatto scaricabile
       - name: Salva log di compilazione
         if: always()
         uses: actions/upload-artifact@v4
@@ -38,8 +33,8 @@ jobs:
           name: build-log
           path: build.log
 
-      # Fallisce se ci sono errori (i warning sono tollerati ma segnalati)
-      - name: Controlla presenza di errori
+      # Errori bloccano la CI, warning sono segnalati ma tollerati (vincolo 4)
+      - name: Controlla errori e warning
         run: |
           if grep -i "error:" build.log; then
             echo "Trovati errori di compilazione."
