@@ -13,40 +13,105 @@
 
 ---
 
-## Build
+## Index
+
+- [Build Docker Image](#build-docker-image)
+- [Build Project](#build-project)
+- [Run](#run)
+- [Run Tests](#run-tests)
+
+---
+
+## Build Docker Image
+
+Prima di tutto, costruisci l'immagine Docker dal Dockerfile del corso:
+
+**Windows (PowerShell)**
+
+```powershell
+docker build -t qt-course-env .
+```
+
+**Unix (bash)**
 
 ```bash
-docker pull unipd-oop/qt-env:2025
+docker build -t qt-course-env .
+```
 
-docker run --rm \
-  -v "$(pwd)":/app -w /app \
-  -u $(id -u):$(id -g) \
-  unipd-oop/qt-env:2025 \
+---
+
+## Build Project
+
+**Windows (PowerShell)**
+
+```powershell
+docker run --rm `
+  -v "${PWD}:/app" -w /app `
+  -e PATH="/usr/lib/qt6/bin:/usr/bin:/bin" `
+  qt-course-env `
   bash -c "qmake ActivityManager.pro && make -j4"
 ```
 
-## Run (with display support on GNU/Linux)
+**Unix (bash)**
+
+```bash
+docker run --rm \
+  -v "$(pwd)":/app -w /app \
+  -e PATH="/usr/lib/qt6/bin:/usr/bin:/bin" \
+  qt-course-env \
+  bash -c "qmake ActivityManager.pro && make -j4"
+```
+
+---
+
+## Run
+
+**Windows (PowerShell)**
+
+```powershell
+docker run -it --rm `
+  -v "${PWD}:/app" -w /app `
+  -e PATH="/usr/lib/qt6/bin:/usr/bin:/bin" `
+  qt-course-env bash
+```
+
+**Unix (bash) — con supporto grafico**
 
 ```bash
 xhost +local:docker
 
 docker run -it --rm \
   -v "$(pwd)":/app -w /app \
-  -u $(id -u):$(id -g) \
+  -e PATH="/usr/lib/qt6/bin:/usr/bin:/bin" \
   -e DISPLAY=$DISPLAY \
   -e XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR \
   -v $XDG_RUNTIME_DIR:$XDG_RUNTIME_DIR \
   -v /tmp/.X11-unix:/tmp/.X11-unix \
-  unipd-oop/qt-env:2025 bash
+  qt-course-env bash
 ```
 
+---
+
 ## Run Tests
+
+**Windows (PowerShell)**
+
+```powershell
+docker run --rm `
+  -v "${PWD}:/app" -w /app/tests `
+  -e PATH="/usr/lib/qt6/bin:/usr/bin:/bin" `
+  -e QT_QPA_PLATFORM=offscreen `
+  qt-course-env `
+  bash -c "qmake tests.pro && make -j4 && ./tests -v2"
+```
+
+**Unix (bash)**
 
 ```bash
 docker run --rm \
   -v "$(pwd)":/app -w /app/tests \
-  -u $(id -u):$(id -g) \
+  -e PATH="/usr/lib/qt6/bin:/usr/bin:/bin" \
   -e QT_QPA_PLATFORM=offscreen \
-  unipd-oop/qt-env:2025 \
+  qt-course-env \
   bash -c "qmake tests.pro && make -j4 && ./tests -v2"
 ```
