@@ -15,19 +15,16 @@ jobs:
       - name: Checkout del repository
         uses: actions/checkout@v4
 
-      - name: Pull immagine Docker del corso
-        run: docker pull unipd-oop/qt-env:2025
+      - name: Build immagine Docker
+        run: docker build -t qt-course-env .
 
-      # Installa cppcheck (non presente nell'immagine del corso)
       - name: Esegui cppcheck
         run: |
           docker run --rm \
             -v ${{ github.workspace }}:/app \
             -w /app \
-            --user root \
-            unipd-oop/qt-env:2025 \
+            qt-course-env \
             bash -c "
-              apt-get update -q && apt-get install -y -q cppcheck &&
               cppcheck \
                 --enable=all \
                 --suppress=missingInclude \

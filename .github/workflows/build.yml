@@ -1,4 +1,5 @@
 name: Build
+
 on:
   push:
     branches: [main, develop]
@@ -22,7 +23,6 @@ jobs:
           docker run --rm \
             -v ${{ github.workspace }}:/app \
             -w /app \
-            -u $(id -u):$(id -g) \
             qt-course-env \
             bash -c "qmake ActivityManager.pro && make -j$(nproc) 2>&1 | tee build.log"
 

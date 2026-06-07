@@ -41,7 +41,7 @@ jobs:
           docker run --rm \
             -v ${{ github.workspace }}:/app \
             -w /app/tests \
-            -u $(id -u):$(id -g) \
+
             -e QT_QPA_PLATFORM=offscreen \
             qt-course-env \
             bash -c "
@@ -55,7 +55,7 @@ jobs:
           docker run --rm \
             -v ${{ github.workspace }}:/app \
             -w /app/tests \
-            -u $(id -u):$(id -g) \
+
             qt-course-env \
             bash -c "
               lcov --capture \
@@ -70,7 +70,6 @@ jobs:
         uses: coverallsapp/github-action@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          coveralls-token: ${{ secrets.COVERALLS_REPO_TOKEN }}
           path-to-lcov: tests/coverage.info
 
       # ── 6. Pubblica risultati test su GitHub ────────────────────────────────
