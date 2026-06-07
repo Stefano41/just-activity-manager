@@ -23,6 +23,7 @@ jobs:
           docker run --rm \
             -v ${{ github.workspace }}:/app \
             -w /app \
+            -e PATH="/usr/lib/qt6/bin:/usr/bin:/bin" \
             qt-course-env \
             bash -c "qmake ActivityManager.pro && make -j$(nproc) 2>&1 | tee build.log"
 

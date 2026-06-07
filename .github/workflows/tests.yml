@@ -20,9 +20,12 @@ jobs:
         run: docker build -t qt-course-env .
 
       # ── 2. Verifica che il container si avvii e Qt sia disponibile ──────────
+      # Il PATH viene impostato esplicitamente perche qmake in Ubuntu 24.04
+      # con Qt6 si trova in /usr/lib/qt6/bin e non e' nel PATH di default
       - name: Verifica ambiente nel container
         run: |
           docker run --rm \
+            -e PATH="/usr/lib/qt6/bin:/usr/bin:/bin" \
             qt-course-env \
             bash -c "
               echo '=== Verifica ambiente ===' &&
@@ -41,8 +44,8 @@ jobs:
           docker run --rm \
             -v ${{ github.workspace }}:/app \
             -w /app/tests \
-
             -e QT_QPA_PLATFORM=offscreen \
+            -e PATH="/usr/lib/qt6/bin:/usr/bin:/bin" \
             qt-course-env \
             bash -c "
               qmake 'QMAKE_CXXFLAGS+=--coverage' 'QMAKE_LFLAGS+=--coverage' tests.pro &&
@@ -55,7 +58,7 @@ jobs:
           docker run --rm \
             -v ${{ github.workspace }}:/app \
             -w /app/tests \
-
+            -e PATH="/usr/lib/qt6/bin:/usr/bin:/bin" \
             qt-course-env \
             bash -c "
               lcov --capture \
