@@ -11,6 +11,9 @@ jobs:
     name: Test unitari + verifica Docker
     runs-on: ubuntu-latest
 
+    permissions:
+      checks: write
+
     steps:
       - name: Checkout del repository
         uses: actions/checkout@v4
@@ -67,9 +70,7 @@ jobs:
               make test 2>&1 | tee test_output.log"
 
       # ── 4. Genera report di copertura con lcov ──────────────────────────────
-      # continue-on-error: true finche --coverage non e' attivo nel Makefile
       - name: Genera report copertura
-        continue-on-error: true
         run: |
           docker run --rm \
             -v ${{ github.workspace }}:/app \
@@ -85,9 +86,7 @@ jobs:
                    --output-file tests/coverage.info"
 
       # ── 5. Invia copertura a Coveralls ─────────────────────────────────────
-      # continue-on-error: true finche la copertura non e' attiva
       - name: Invia a Coveralls
-        continue-on-error: true
         uses: coverallsapp/github-action@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -96,6 +95,7 @@ jobs:
       # ── 6. Pubblica risultati test su GitHub ────────────────────────────────
       - name: Pubblica risultati test
         if: always()
+        continue-on-error: true
         uses: mikepenz/action-junit-report@v4
         with:
           report_paths: test_results.xml
