@@ -86,6 +86,12 @@ jobs:
                    --ignore-errors unused \
                    --output-file tests/coverage.info"
 
+      - name: Verifica coverage.info
+        run: |
+          echo "=== Contenuto coverage.info ==="
+          cat tests/coverage.info || echo "File non trovato"
+          echo "=== Fine ==="
+
       # ── 5. Invia copertura a Coveralls ─────────────────────────────────────
       - name: Invia a Coveralls
         uses: coverallsapp/github-action@v2
