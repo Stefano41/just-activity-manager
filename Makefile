@@ -3,10 +3,14 @@ CXXFLAGS = -Wall -march=x86-64
 BUILDDIR = build
 BINDIR   = bin
 
-.PHONY: all clean
+.PHONY: all test clean
 
 all: $(BUILDDIR) $(BINDIR)
-	$(CXX) $(CXXFLAGS) -o $(BINDIR)/ActivityManager main.cpp
+	$(CXX) $(CXXFLAGS) -o $(BINDIR)/ActivityManager main.cpp src/activity.cpp -I.
+
+test: $(BUILDDIR) $(BINDIR)
+	$(CXX) $(CXXFLAGS) -o $(BINDIR)/test_activity tests/test_activity.cpp src/activity.cpp -I.
+	./$(BINDIR)/test_activity
 
 $(BUILDDIR):
 	mkdir -p $(BUILDDIR)
@@ -15,4 +19,4 @@ $(BINDIR):
 	mkdir -p $(BINDIR)
 
 clean:
-	rm -rf $(BUILDDIR) $(BINDIR)
+	rm -rf $(BUILDDIR) $(BINDIR) 

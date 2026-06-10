@@ -48,9 +48,9 @@ jobs:
             -e PATH="/usr/lib/qt6/bin:/usr/bin:/bin" \
             qt-course-env \
             bash -c "
-              qmake 'QMAKE_CXXFLAGS+=--coverage' 'QMAKE_LFLAGS+=--coverage' tests.pro &&
+              qmake tests.pro &&
               make -j$(nproc) &&
-              ./tests -v2 -o ../test_results.xml,xunitxml 2>&1 | tee ../test_output.log"
+              ./tests -v2 -o ../test_results.xml,xunitxml 2>&1 | tee ../test_output.log""
 
       # ── 4. Genera report di copertura con lcov ──────────────────────────────
       - name: Genera report copertura
