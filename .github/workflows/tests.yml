@@ -50,7 +50,7 @@ jobs:
             bash -c "
               qmake tests.pro &&
               make -j$(nproc) &&
-              ./tests -v2 -o ../test_results.xml,xunitxml 2>&1 | tee ../test_output.log""
+              ./tests -v2 -o ../test_results.xml,xunitxml 2>&1 | tee ../test_output.log"
 
       # ── 4. Genera report di copertura con lcov ──────────────────────────────
       - name: Genera report copertura
