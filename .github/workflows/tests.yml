@@ -61,13 +61,12 @@ jobs:
         run: |
           docker run --rm \
             -v ${{ github.workspace }}:/app \
-            -w /app/tests \
+            -w /app \
             -e QT_QPA_PLATFORM=offscreen \
             -e PATH="/usr/lib/qt6/bin:/usr/bin:/bin" \
             qt-course-env \
             bash -c "
-              make -j$(nproc) &&
-              ./bin/test_activity 2>&1 | tee ../test_output.log"
+              make test 2>&1 | tee test_output.log"
 
       # ── 4. Genera report di copertura con lcov ──────────────────────────────
       - name: Genera report copertura
