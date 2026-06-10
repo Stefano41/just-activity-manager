@@ -92,13 +92,16 @@ jobs:
           cat tests/coverage.info || echo "File non trovato"
           echo "=== Fine ==="
 
+      - name: Correggi path in coverage.info
+        run: |
+          sed -i 's|SF:/app/|SF:|g' tests/coverage.info
+
       # ── 5. Invia copertura a Coveralls ─────────────────────────────────────
       - name: Invia a Coveralls
         uses: coverallsapp/github-action@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path-to-lcov: tests/coverage.info
-          base-path: /app
 
       # ── 6. Pubblica risultati test su GitHub ────────────────────────────────
       - name: Pubblica risultati test
