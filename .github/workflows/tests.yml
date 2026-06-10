@@ -83,6 +83,7 @@ jobs:
                    --output-file tests/coverage.info &&
               lcov --remove tests/coverage.info \
                    '/usr/*' '*/tests/*' '*/Qt/*' \
+                   --ignore-errors unused \
                    --output-file tests/coverage.info"
 
       # ── 5. Invia copertura a Coveralls ─────────────────────────────────────
