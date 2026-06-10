@@ -55,8 +55,6 @@ jobs:
               echo '=== Container operativo ==='"
 
       # ── 3. Compila ed esegui i test ─────────────────────────────────────────
-      # QT_QPA_PLATFORM=offscreen: evita errori di display in ambiente headless
-      # --coverage: strumenta il codice per gcov
       - name: Compila ed esegui i test
         run: |
           docker run --rm \
@@ -69,23 +67,27 @@ jobs:
               make test 2>&1 | tee test_output.log"
 
       # ── 4. Genera report di copertura con lcov ──────────────────────────────
+      # continue-on-error: true finche --coverage non e' attivo nel Makefile
       - name: Genera report copertura
+        continue-on-error: true
         run: |
           docker run --rm \
             -v ${{ github.workspace }}:/app \
-            -w /app/tests \
+            -w /app \
             -e PATH="/usr/lib/qt6/bin:/usr/bin:/bin" \
             qt-course-env \
             bash -c "
               lcov --capture \
                    --directory . \
-                   --output-file coverage.info &&
-              lcov --remove coverage.info \
+                   --output-file tests/coverage.info &&
+              lcov --remove tests/coverage.info \
                    '/usr/*' '*/tests/*' '*/Qt/*' \
-                   --output-file coverage.info"
+                   --output-file tests/coverage.info"
 
       # ── 5. Invia copertura a Coveralls ─────────────────────────────────────
+      # continue-on-error: true finche la copertura non e' attiva
       - name: Invia a Coveralls
+        continue-on-error: true
         uses: coverallsapp/github-action@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
