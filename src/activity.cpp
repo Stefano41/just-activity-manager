@@ -10,31 +10,31 @@ Activity::Activity(const std::string& nome, const std::string& descrizione, cons
     generaId();
 }
 
-std::string const Activity::getId(){
+std::string Activity::getId() const{
     return id;
 }
 
-std::string const Activity::getNome(){
+std::string Activity::getNome() const{
     return nome;
 }
 
-std::string const Activity::getDescrizione(){
+std::string Activity::getDescrizione() const{
     return descrizione;
 }
 
-Activity::Status const Activity::getStato(){
+Activity::Status Activity::getStato() const{
     return stato;
 }
 
-Activity::Priorita const Activity::getPriorita(){
+Activity::Priorita Activity::getPriorita() const{
     return priorita;
 }
 
-time_t const Activity::getCreatedAt(){
+time_t Activity::getCreatedAt() const{
     return createdAt;
 }
 
-time_t const Activity::getUpdatedAt(){
+time_t Activity::getUpdatedAt() const{
     return updatedAt;
 }
 

@@ -16,8 +16,26 @@ jobs:
         uses: actions/checkout@v4
 
       # ── 1. Build immagine (include lcov e cppcheck) ─────────────────────────
+      - name: Cache immagine Docker
+        id: cache-docker
+        uses: actions/cache@v4
+        with:
+          path: /tmp/docker-cache
+          key: docker-${{ hashFiles('Dockerfile') }}
+
+      - name: Carica immagine dalla cache
+        if: steps.cache-docker.outputs.cache-hit == 'true'
+        run: docker load -i /tmp/docker-cache/qt-course-env.tar
+
       - name: Build immagine Docker
+        if: steps.cache-docker.outputs.cache-hit != 'true'
         run: docker build -t qt-course-env .
+
+      - name: Salva immagine in cache
+        if: steps.cache-docker.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p /tmp/docker-cache
+          docker save qt-course-env -o /tmp/docker-cache/qt-course-env.tar
 
       # ── 2. Verifica che il container si avvii e Qt sia disponibile ──────────
       # Il PATH viene impostato esplicitamente perche qmake in Ubuntu 24.04
@@ -48,9 +66,8 @@ jobs:
             -e PATH="/usr/lib/qt6/bin:/usr/bin:/bin" \
             qt-course-env \
             bash -c "
-              qmake tests.pro &&
               make -j$(nproc) &&
-              ./tests -v2 -o ../test_results.xml,xunitxml 2>&1 | tee ../test_output.log"
+              ./bin/test_activity 2>&1 | tee ../test_output.log"
 
       # ── 4. Genera report di copertura con lcov ──────────────────────────────
       - name: Genera report copertura

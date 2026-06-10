@@ -15,8 +15,26 @@ jobs:
       - name: Checkout del repository
         uses: actions/checkout@v4
 
+      - name: Cache immagine Docker
+        id: cache-docker
+        uses: actions/cache@v4
+        with:
+          path: /tmp/docker-cache
+          key: docker-${{ hashFiles('Dockerfile') }}
+
+      - name: Carica immagine dalla cache
+        if: steps.cache-docker.outputs.cache-hit == 'true'
+        run: docker load -i /tmp/docker-cache/qt-course-env.tar
+
       - name: Build immagine Docker
+        if: steps.cache-docker.outputs.cache-hit != 'true'
         run: docker build -t qt-course-env .
+
+      - name: Salva immagine in cache
+        if: steps.cache-docker.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p /tmp/docker-cache
+          docker save qt-course-env -o /tmp/docker-cache/qt-course-env.tar
 
       - name: Compila il progetto
         run: |
